@@ -1,0 +1,526 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-theme="cis">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>How to Survive a Separatist Attack</title>
+
+  <!-- Futuristic fonts -->
+  https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Audiowide&display=swap
+
+  <style>
+    /* =========================================
+       THEME VARIABLES
+    ========================================== */
+    :root{
+      --blue-950: #071333;
+      --blue-900: #0a1a3f;
+      --blue-800: #102555;
+      --blue-700: #152a60;
+      --blue-500: #1d3e85;
+      --blue-300: #4a6bb5;
+
+      --white-000: #ffffff;
+      --white-100: #e6eef8;
+      --white-200: #cfd9eb;
+
+      --red-700: #b3002d;
+      --red-600: #d01238;
+      --red-500: #e0193f;
+
+      --shadow-900: rgba(0,0,0,0.6);
+      --shadow-700: rgba(0,0,0,0.35);
+      --shadow-500: rgba(0,0,0,0.2);
+    }
+
+    /* Republic (light) variant via data-theme */
+    [data-theme="republic"]{
+      --blue-950: #f3f6ff;
+      --blue-900: #edf3ff;
+      --blue-800: #e6edff;
+      --blue-700: #dae6ff;
+      --blue-500: #274690; /* strong navy accent */
+      --blue-300: #3c64b1;
+
+      --white-000: #091226;
+      --white-100: #17233d;
+      --white-200: #2a3a5e;
+
+      --red-700: #8b0024;
+      --red-600: #a50e32;
+      --red-500: #c5163d;
+    }
+
+    /* =========================================
+       GLOBAL / BASE
+    ========================================== */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--white-100);
+      font-family: "Orbitron","Audiowide",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;
+      letter-spacing: 0.25px;
+      background:
+        radial-gradient(1200px 800px at 80% -15%, rgba(227, 33, 70, 0.12), transparent 40%),
+        radial-gradient(1000px 700px at -10% 110%, rgba(29, 62, 133, 0.18), transparent 45%),
+        linear-gradient(180deg, var(--blue-900) 0%, var(--blue-950) 100%);
+      background-attachment: fixed;
+      animation: bgShift 12s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      0%   { background-position: 0 0, 0 0, 0 0; }
+      100% { background-position: 20px -20px, -30px 30px, 0 0; }
+    }
+
+    /* Container */
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 5.5rem 1.25rem 3rem;
+    }
+
+    /* Sticky glass header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: saturate(160%) blur(6px);
+      background: linear-gradient(180deg, rgba(21,42,96,0.35), rgba(10,26,63,0.55));
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .head-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .title {
+      text-align: center;
+      font-family: "Audiowide","Orbitron",sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.4rem, 4.5vw, 2.4rem);
+      color: var(--white-000);
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      display: inline-block;
+      padding: 0.35rem 0.8rem;
+      background: linear-gradient(180deg, rgba(21,42,96,0.75), rgba(10,26,63,0.75));
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 6px 18px var(--shadow-900), inset 0 0 0 2px rgba(255,255,255,0.06);
+      position: relative;
+    }
+    .title::before, .title::after {
+      content: "";
+      position: absolute;
+      height: 3px;
+      width: 32px;
+      background: linear-gradient(90deg, transparent, var(--red-500), transparent);
+      bottom: -8px;
+    }
+    .title::before { left: 12%; }
+    .title::after  { right: 12%; }
+
+    /* Theme toggle */
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.4rem 0.65rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(21,42,96,0.8), rgba(10,26,63,0.9));
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 12px var(--shadow-700);
+      color: var(--white-000);
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red-500);
+      box-shadow: 0 0 10px rgba(224,25,63,0.75);
+    }
+
+    /* Card / panel */
+    .panel {
+      margin-top: 1.35rem;
+      background: linear-gradient(180deg, rgba(21,42,96,0.35), rgba(10,26,63,0.55));
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 18px;
+      padding: 1.25rem;
+      box-shadow: 0 12px 24px var(--shadow-700), inset 0 0 0 1px rgba(255,255,255,0.05);
+      backdrop-filter: saturate(130%) blur(2px);
+      transform: translateZ(0);
+      transition: transform 250ms ease, box-shadow 250ms ease;
+    }
+    .panel:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 34px var(--shadow-700), inset 0 0 0 1px rgba(255,255,255,0.07);
+    }
+
+    /* Section heading + separator */
+    .section-title {
+      font-weight: 700;
+      color: var(--white-000);
+      margin: 0 0 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .accent { color: var(--red-500); }
+    .separator {
+      height: 2px;
+      width: 82px;
+      background: linear-gradient(90deg, var(--red-700), var(--blue-500));
+      margin: 0.5rem 0 1rem;
+      border-radius: 2px;
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem;
+    }
+    .col-12 { grid-column: span 12; }
+    .col-6  { grid-column: span 6; }
+    .col-4  { grid-column: span 4; }
+    .col-8  { grid-column: span 8; }
+    @media (max-width: 860px){
+      .col-6, .col-4, .col-8 { grid-column: span 12; }
+    }
+
+    /* Steps list */
+    ul.steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.85rem;
+    }
+    ul.steps li {
+      position: relative;
+      padding: 0.85rem 0.9rem 0.85rem 2.75rem;
+      background: rgba(12, 26, 58, 0.55);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+    ul.steps li::before {
+      content: "▸";
+      font-weight: 800;
+      color: var(--red-500);
+      position: absolute;
+      left: 0.95rem;
+      top: 50%;
+      transform: translateY(-50%);
+      text-shadow: 0 0 6px rgba(224,25,63,0.65);
+    }
+    ul.steps li:hover {
+      transform: translateX(2px);
+      box-shadow: 0 10px 18px var(--shadow-500);
+    }
+    ul.steps li strong { color: var(--white-000); }
+
+    /* Inline callouts (kept visual but not links) */
+    .callout {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 8px;
+      background: rgba(29,62,133,0.25);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--white-100);
+    }
+
+    /* Accordion (CSS-only) */
+    details {
+      background: rgba(12,26,58,0.55);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 0.65rem 0.85rem;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--white-000);
+      list-style: none;
+    }
+    details[open] {
+      box-shadow: 0 10px 18px var(--shadow-500);
+    }
+
+    /* Links (only used in footer references) */
+    a {
+      color: var(--white-000);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(255,255,255,0.35);
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    a:hover {
+      color: var(--red-500);
+      border-color: var(--red-500);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 2rem;
+      color: #9fb0cc;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.4rem 0.65rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(21,42,96,0.8), rgba(10,26,63,0.9));
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 6px 16px var(--shadow-700);
+      margin: 0.5rem 0 1rem;
+    }
+    .badge .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red-500);
+      box-shadow: 0 0 10px rgba(224,25,63,0.75);
+    }
+    .badge .label {
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--white-000);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sticky header with theme toggle -->
+  <header>
+    <div class="head-inner">
+      <h1 class="title"> Menu: <a href = "index.html"></a>How to Survive a Separatist Attack</h1>
+      <button class="toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Toggle CIS / Republic</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- Threat Overview -->
+    <section class="panel">
+      <h2 class="section-title">Threat <span class="accent">Overview</span></h2>
+      <div class="separator"></div>
+
+      <div class="badge">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="label">CIS Profile</span>
+      </div>
+
+<div class='tableauPlaceholder' id='viz1765214487405' style='position: relative'><noscript><a href='#'><img alt='The American Political Universe ' src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Po&#47;PoliticalDW&#47;TheAmericanPoliticalUniverse&#47;1_rss.png' style='border: none' /></a></noscript><object class='tableauViz'  style='display:none;'><param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /> <param name='embed_code_version' value='3' /> <param name='site_root' value='' /><param name='name' value='PoliticalDW&#47;TheAmericanPoliticalUniverse' /><param name='tabs' value='no' /><param name='toolbar' value='yes' /><param name='static_image' value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Po&#47;PoliticalDW&#47;TheAmericanPoliticalUniverse&#47;1.png' /> <param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' /><param name='display_spinner' value='yes' /><param name='display_overlay' value='yes' /><param name='display_count' value='yes' /><param name='language' value='en-US' /><param name='filter' value='_gl=1*7248b8*_ga*MjEzMjMzNzY2NC4xNzYyMTg4NjM2*_ga_8YLN0SNXVS*czE3NjUyMTQzOTgkbzUkZzAkdDE3NjUyMTQzOTgkajYwJGwwJGgw*_gcl_au*MTg1MTMzNDc2MC4xNzYyMTg4NjM3Ljg3NjY4NTIwMy4xNzYyNjY2MDg1LjE3NjI2NjYwODQ.' /></object></div>                <script type='text/javascript'>                    var divElement = document.getElementById('viz1765214487405');                    var vizElement = divElement.getElementsByTagName('object')[0];                    vizElement.style.width='1000px';vizElement.style.height='1227px';                    var scriptElement = document.createElement('script');                    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';                    vizElement.parentNode.insertBefore(scriptElement, vizElement);                </script>
+
+      <div class="grid">
+        <div class="col-8">
+          <p>
+            Expect massed droid formations supported by armor and ruthless commanders. Typical forces include
+            line-infantry B1 units (numerous but brittle), heavier B2 squads (with sustained fire), and rolling
+            droidekas utilizing personal shields and high-rate blasters. Commanders like General Grievous favor rapid
+            flanking, shock pressure, and exploitation of weak sectors. Corporate backers field mechanized support and
+            standardized tactics, which you can predict—and exploit.
+          </p>
+        </div>
+        <div class="col-4">
+          <ul class="steps" aria-label="CIS at-a-glance">
+            <li><strong>Mass Fire:</strong> Overwhelm via volume, not precision.</li>
+            <li><strong>Shield Tech:</strong> Droideka bubbles resist blaster fire.</li>
+            <li><strong>Rigid Scripts:</strong> Patrol routes & arcs are predictable.</li>
+            <li><strong>Fast Flanks:</strong> Grievous pressures your weak sides.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preparation Checklist -->
+    <section class="panel">
+      <h2 class="section-title">Preparation <span class="accent">Checklist</span></h2>
+      <div class="separator"></div>
+      <ul class="steps" aria-label="Preparation items">
+        <li><strong>Map your cover:</strong> Identify hard cover, choke points, and fallback routes in advance.</li>
+        <li><strong>Signal plan:</strong> Pre-assign hand signals & rally points; carry beacons or glow markers.</li>
+        <li><strong>Ion/EMP options:</strong> Pack an <span class="callout">ion flare</span> or <span class="callout">EMP charge</span> for shielded targets.</li>
+        <li><strong>Comms discipline:</strong> Short bursts, clear brevity; avoid open chatter that droids can triangulate.</li>
+        <li><strong>Medical basics:</strong> Tourniquet, seal kit, stim; designate a casualty collection point.</li>
+      </ul>
+    </section>
+
+    <!-- Core Survival Steps -->
+    <section class="panel">
+      <h2 class="section-title">Survival <span class="accent">Protocol</span></h2>
+      <div class="separator"></div>
+      <ul class="steps" aria-label="Steps to survive a Separatist attack">
+        <li><strong>Get out of open sightlines:</strong> Move to hard cover (durasteel, bulkheads, natural rock).</li>
+        <li><strong>Break sensors & targeting:</strong> Use smoke, glare, ionized dust; force misreads in droid optics.</li>
+        <li><strong>Threat triage:</strong> Reduce B1 volume first; fix B2s from angles; save droidekas for ion/EMP.</li>
+        <li><strong>De-sync their scripts:</strong> Maneuver off-axis; feint; funnel into crossfires and choke points.</li>
+        <li><strong>Short-burst movement:</strong> Shift positions every 5–10 seconds; never dash across open ground unprotected.</li>
+        <li><strong>Shield counters:</strong> Ion or EMP to drop bubbles; only then apply concentrated blaster fire.</li>
+        <li><strong>Watch the flanks:</strong> Expect aggressive swings; reinforce or withdraw before encirclement.</li>
+        <li><strong>Coordinate allies:</strong> Sync with Jedi or clones; let them pin high-threat units while you maneuver.</li>
+        <li><strong>Smart evacuation:</strong> Multi-route egress to rally points; avoid bottlenecks and predictable corridors.</li>
+        <li><strong>After-contact checks:</strong> Account for civilians, mark hazards, log droid patterns for next action.</li>
+      </ul>
+    </section>
+
+    <!-- Urban vs Wilderness -->
+    <section class="panel">
+      <h2 class="section-title">Environment <span class="accent">Tactics</span></h2>
+      <div class="separator"></div>
+      <div class="grid">
+        <div class="col-6">
+          <h3 class="section-title" style="font-size:1rem;">Urban</h3>
+          <ul class="steps">
+            <li><strong>Vertical cover:</strong> Use bulkheads, pillars, and staggered corners to limit arcs.</li>
+            <li><strong>Ambush lanes:</strong> Set traps in narrow passages; force droids into kill zones.</li>
+            <li><strong>Light control:</strong> Backlight droidekas; use reflective debris to confuse sensors.</li>
+            <li><strong>Door discipline:</strong> Slice/lock doors behind you to delay pursuit.</li>
+          </ul>
+        </div>
+        <div class="col-6">
+          <h3 class="section-title" style="font-size:1rem;">Wilderness</h3>
+          <ul class="steps">
+            <li><strong>Terrain masking:</strong> Ridges & boulders break line-of-fire; stay low along contours.</li>
+            <li><strong>Noise management:</strong> Short comms; avoid electronic signatures that draw patrols.</li>
+            <li><strong>Decoys:</strong> Heat sources or moving fabric to misdirect aim routines.</li>
+            <li><strong>Route layering:</strong> Prepare primary, alternate, contingency, and emergency paths.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Advanced tactics (accordion) -->
+    <section class="panel">
+      <h2 class="section-title">Advanced <span class="accent">Tactics</span></h2>
+      <div class="separator"></div>
+      <details>
+        <summary>Anti-armor, suppression, deception & more</summary>
+        <div style="margin-top:0.75rem;">
+          <ul class="steps">
+            <li><strong>Anti-armor:</strong> Ion charges on access hatches; aim for joints & exhaust ports.</li>
+            <li><strong>Suppression:</strong> Staggered fire to pin heads; maneuver a second element off-axis.</li>
+            <li><strong>Deception:</strong> Sound loops & false beacons to pull patrols; strike the rear echelons.</li>
+            <li><strong>Sensor flooding:</strong> Aerosolized particulates or mirrored shrapnel to force algorithms to stall.</li>
+            <li><strong>Counter-encirclement:</strong> Pre-brief a “break glass” rally and punch through the thinnest segment.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- Coordination & Plo Koon -->
+    <section class="panel">
+      <h2 class="section-title">Coordination <span class="accent">Guidelines</span></h2>
+      <div class="separator"></div>
+      <div class="grid">
+        <div class="col-8">
+          <ul class="steps">
+            <li><strong>Task pairing:</strong> Assign elements (fix, flank, support, med) and keep roles clean.</li>
+            <li><strong>Tempo control:</strong> Push when droids stall; disengage when shields or mass fire spike.</li>
+            <li><strong>Clone integration:</strong> Cross-train signals; agree on sectors & breach timing.</li>
+            <li><strong>Civilians first:</strong> Move non-combatants early through secured corridors.</li>
+          </ul>
+        </div>
+        <div class="col-4">
+          <div class="badge">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="label">Plo Koon Spotlight</span>
+          </div>
+          <p>
+            Jedi Master <strong>Plo Koon</strong>—calm, precise, and absolutely clutch under pressure—excels at
+            defensive command, orderly withdrawals, and protecting civilians. If he’s present, align your movements
+            to his positioning: let him fix high-threat units, then you exploit openings with disciplined flanks.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Evac & After-Action -->
+    <section class="panel">
+      <h2 class="section-title">Evacuation & <span class="accent">After-Action</span></h2>
+      <div class="separator"></div>
+      <div class="grid">
+        <div class="col-6">
+          <h3 class="section-title" style="font-size:1rem;">Evac</h3>
+          <ul class="steps">
+            <li><strong>Stagger routes:</strong> Avoid single corridors; pre-brief alternates.</li>
+            <li><strong>Beacon discipline:</strong> Use low-power markers; don’t advertise to sensors.</li>
+            <li><strong>Rear guard:</strong> Assign suppression while main body withdraws.</li>
+          </ul>
+        </div>
+        <div class="col-6">
+          <h3 class="section-title" style="font-size:1rem;">After-Action</h3>
+          <ul class="steps">
+            <li><strong>Roll call:</strong> Account for all personnel and civilians.</li>
+            <li><strong>Damage control:</strong> Treat, triage, stabilize; log hazards & munitions.</li>
+            <li><strong>Intel share:</strong> Record droid patterns and shield timings for next contact.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mistakes to Avoid -->
+    <section class="panel">
+      <h2 class="section-title">Mistakes to <span class="accent">Avoid</span></h2>
+      <div class="separator"></div>
+      <ul class="steps">
+        <li><strong>Crossing open ground:</strong> Without smoke or suppression—hard no.</li>
+        <li><strong>Ignoring shields:</strong> Firing at active droideka bubbles wastes time and ammo.</li>
+        <li><strong>Static defense:</strong> Droids love fixed targets; keep the tempo dynamic.</li>
+        <li><strong>Comms overflow:</strong> Long transmissions invite triangulation and swarm pressure.</li>
+      </ul>
+    </section>
+
+    <!-- Lore & References (All links here) -->
+    <section class="panel">
+      <h2 class="section-title">Lore & <span class="accent">References</span></h2>
+      <div class="separator"></div>
+      <p style="line-height:1.7;">
+        • https://en.wikipedia.org/wiki/Confederacy_of_Independent_SystemsConfederacy of Independent Systems (Separatists)</a><br/>
+        • https://en.wikipedia.org/wiki/Droid_Army_(Star_Wars)Droid Army</a> &nbsp;|&nbsp;
+          https://en.wikipedia.org/wiki/B1_battle_droidB1 battle droid</a> &nbsp;|&nbsp;
+          https://en.wikipedia.org/wiki/B2_super_battle_droidB2 super battle droid</a> &nbsp;|&nbsp;
+          https://en.wikipedia.org/wiki/DroidekaDroideka</a><br/>
+        • https://en.wikipedia.org/wiki/General_GrievousGeneral Grievous</a><br/>
+        • https://en.wikipedia.org/wiki/Plo_KoonPlo Koon</a>
+      </p>
+    </section>
+
+    <footer>
+      Theme: dark navy, cool whites, and crimson accents—CIS edge with Republic toggle. May the Force be with you.
+    </footer>
+  </div>
+
+  <!-- Tiny JS for theme toggle -->
+  <script>
+    const root = document.documentElement;
+    const btn  = document.getElementById('themeToggle');
+    btn.addEventListener('click', () => {
+      const current = root.getAttribute('data-theme') || 'cis';
+      const next = current === 'cis' ? 'republic' : 'cis';
+      root.setAttribute('data-theme', next);
+    });
+  </script>
+</body>
+</html>

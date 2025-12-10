@@ -1,0 +1,728 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Snake — Slither-Style Jungle</title>
+
+  <!-- Modern & readable fonts -->
+  https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@600;800&display=swap
+
+  <style>
+    :root{
+      /* Jungle neon palette */
+      --bg-0: #08160f;
+      --bg-1: #0c1f14;
+      --bg-2: #0b1f15;
+      --grid: rgba(255,255,255,0.06);
+
+      --leaf-900: #0e3b21;
+      --leaf-700: #136b35;
+      --leaf-600: #189545;
+      --leaf-500: #1fa34a;
+      --leaf-300: #6dd68c;
+
+      --fruit-500: #ff4d4d;
+      --fruit-300: #ff9aa2;
+
+      --text-100: #eaf7ec;
+      --text-80: #cfead5;
+      --amber: #ffc857;
+
+      --shadow: rgba(0,0,0,0.65);
+      --panel: rgba(14,59,33,0.22);
+      --panel-border: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--text-100);
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 800px at 85% 110%, rgba(20,65,40,0.22), transparent 45%),
+        radial-gradient(1200px 800px at 15% -10%, rgba(31,163,74,0.12), transparent 40%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+      overflow: hidden;
+    }
+
+    /* Subtle scanline for “game” feel */
+    body::before {
+      content:"";
+      position:fixed; inset:0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.015) 0px,
+        rgba(255,255,255,0.015) 1px,
+        transparent 2px,
+        transparent 3px
+      );
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+
+    /* Header HUD */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      backdrop-filter: saturate(160%) blur(6px);
+      background: linear-gradient(180deg, rgba(19,107,53,0.20), rgba(12,31,20,0.40));
+      border-bottom: 1px solid var(--panel-border);
+    }
+    .hud {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.65rem 1rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 0.65rem;
+      align-items: center;
+    }
+
+    .title {
+      font-family: "Orbitron","Inter",sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.2rem, 4.2vw, 2rem);
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      color: var(--text-100);
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      text-shadow: 0 0 14px rgba(31,163,74,0.35);
+    }
+    .title .glyph { color: var(--leaf-300); filter: drop-shadow(0 0 10px rgba(109,214,140,0.55)); }
+
+    .panel {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 0.4rem 0.6rem;
+      box-shadow: 0 4px 12px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .stat {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      font-weight: 800; letter-spacing: 0.5px;
+    }
+    .stat .label { color: var(--text-80); }
+    .stat .value { color: var(--leaf-300); }
+
+    .slider-group {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .slider-group label { font-weight: 800; color: var(--text-80); }
+    .slider-group input[type="range"] { width: 170px; accent-color: var(--leaf-500); }
+    .slider-group .value { color: var(--amber); font-weight: 800; }
+
+    .btn {
+      cursor: pointer;
+      border: 1px solid var(--panel-border);
+      background: linear-gradient(180deg, #0f2a1b, #0b1f15);
+      color: var(--text-100);
+      padding: 0.45rem 0.8rem;
+      border-radius: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 14px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.03);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px var(--shadow); border-color: var(--leaf-500); }
+
+    /* Canvas occupies full viewport behind HUD */
+    #game {
+      position: fixed;
+      inset: 0;
+      width: 100vw; height: 100vh;
+      display: block;
+      background:
+        linear-gradient(180deg, var(--bg-2), var(--bg-1));
+    }
+
+    /* Touch steer pad (mobile) */
+    .steer-pad {
+      position: fixed;
+      right: 16px; bottom: 16px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(120px 120px at 50% 50%, rgba(31,163,74,0.12), rgba(12,31,20,0.55));
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.03);
+      touch-action: none; user-select: none;
+      z-index: 9;
+    }
+    .steer-pad::after {
+      content:"Drag";
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      font-size: 0.8rem; color: var(--text-80); font-weight: 800; letter-spacing: 0.8px;
+    }
+
+    footer {
+      position: fixed; bottom: 10px; left: 0; right: 0;
+      text-align: center; color: var(--text-80); font-size: 0.9rem;
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+  </style>
+</head>
+<body>
+  <!-- HUD -->
+  <header>
+    <div class="hud">
+      <div class="title">
+        <span class="glyph">🟢</span>
+        Snake — Jungle Neon
+      </div>
+
+      <div class="panel">
+        <div class="stat"><span class="label">Score:</span><span class="value" id="score">0</span></div>
+        <div class="stat" style="margin-left:0.6rem;"><span class="label">Best:</span><span class="value" id="best">0</span></div>
+      </div>
+
+      <div class="panel slider-group" title="Adjust snake speed">
+        <label for="speed">Speed</label>
+        <input id="speed" type="range" min="1" max="10" value="5" step="1">
+        <span class="value" id="speedVal">5</span>
+      </div>
+
+      <div class="panel">
+        <button class="btn" id="startPause">Start</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Fullscreen Canvas -->
+  <canvas id="game" aria-label="Snake game canvas"></canvas>
+
+  <!-- Touch steer pad (mobile) -->
+  <div class="steer-pad" id="steerPad" aria-label="Touch steer pad"></div>
+
+  <footer>Mouse/touch to steer • A/D rotate • “num num” plays when eating • Wrap-around world</footer>
+
+  <!-- Modern modular JS -->
+  <script type="module">
+    // =========================
+    // Canvas / Retina setup
+    // =========================
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    let DPR = Math.max(1, window.devicePixelRatio || 1);
+    function resizeCanvas() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = Math.floor(w * DPR);
+      canvas.height = Math.floor(h * DPR);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); // scale drawing to CSS pixels
+      WORLD.width = w;
+      WORLD.height = h;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // =========================
+    // World
+    // =========================
+    const WORLD = { width: window.innerWidth, height: window.innerHeight };
+
+    // =========================
+    // UI Elements
+    // =========================
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const speedInput = document.getElementById('speed');
+    const speedValEl = document.getElementById('speedVal');
+    const startPauseBtn = document.getElementById('startPause');
+    const resetBtn = document.getElementById('reset');
+    const steerPad = document.getElementById('steerPad');
+
+    let best = parseInt(localStorage.getItem("snake_best_modern") || "0", 10);
+    bestEl.textContent = best;
+
+    // =========================
+    // Utilities
+    // =========================
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+    const lerpAngle = (a, b, t) => {
+      let diff = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
+      return a + clamp(diff, -t, t);
+    };
+
+    // =========================
+    // Classes: Snake, Food
+    // =========================
+    class Snake {
+      constructor(x, y) {
+        this.head = { x, y };
+        this.lastSeg = { x, y };     // for fixed spacing insertion
+        this.segments = [];          // body segments (circles), head drawn separately
+        this.segmentSpacing = 10;    // px between segments
+        this.radius = 7;             // segment radius
+        this.headRadius = 9;
+
+        this.angle = 0;              // radians
+        this.targetAngle = 0;
+        this.turnRate = 4.2;         // rad/sec smoothing toward targetAngle
+        this.baseSpeed = 140;        // px/sec (will be scaled by slider)
+        this.speedFactor = 1.0;
+
+        this.targetSegments = 24;    // starting body length (number of circles)
+        this.alive = true;
+
+        this.carry = 0;              // distance since last segment insertion
+      }
+
+      setSpeedFactor(f) { this.speedFactor = f; }
+      setTurnRate(rate) { this.turnRate = rate; }
+
+      aimAt(x, y, dt) {
+        this.targetAngle = Math.atan2(y - this.head.y, x - this.head.x);
+        // Smoothly turn toward targetAngle
+        this.angle = lerpAngle(this.angle, this.targetAngle, this.turnRate * dt);
+      }
+
+      rotate(deltaAngle, dt) {
+        this.angle += deltaAngle * dt;
+      }
+
+      grow(n) {
+        this.targetSegments += n;
+      }
+
+      update(dt) {
+        if (!this.alive) return;
+        // Move head
+        const speed = this.baseSpeed * this.speedFactor;
+        const vx = Math.cos(this.angle) * speed * dt;
+        const vy = Math.sin(this.angle) * speed * dt;
+        const newX = this.head.x + vx;
+        const newY = this.head.y + vy;
+
+        // Wrap-around world
+        this.head.x = (newX + WORLD.width) % WORLD.width;
+        this.head.y = (newY + WORLD.height) % WORLD.height;
+
+        // Insert evenly spaced segments following head path
+        let d = dist(this.lastSeg.x, this.lastSeg.y, this.head.x, this.head.y);
+        while (d >= this.segmentSpacing) {
+          const t = this.segmentSpacing / d;
+          // point from lastSeg towards head by 'segmentSpacing'
+          this.lastSeg.x = this.lastSeg.x + (this.head.x - this.lastSeg.x) * t;
+          this.lastSeg.y = this.lastSeg.y + (this.head.y - this.lastSeg.y) * t;
+          this.segments.unshift({ x: this.lastSeg.x, y: this.lastSeg.y });
+
+          d = dist(this.lastSeg.x, this.lastSeg.y, this.head.x, this.head.y);
+        }
+
+        // Trim tail if longer than target
+        while (this.segments.length > this.targetSegments) {
+          this.segments.pop();
+        }
+      }
+
+      checkSelfCollision() {
+        // Avoid checking near head; start a bit down the body
+        const N = this.segments.length;
+        for (let i = 6; i < N; i++) {
+          const s = this.segments[i];
+          if (dist(this.head.x, this.head.y, s.x, s.y) < this.radius * 1.2) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      render(ctx) {
+        // Grid backdrop (subtle) — optional visual
+        drawGrid(ctx);
+
+        // Draw food handled elsewhere, then snake body/head
+        // Body: alternating greens with glow
+        for (let i = 0; i < this.segments.length; i++) {
+          const s = this.segments[i];
+          const color = i % 2 === 0 ? COLORS.snakeBody : COLORS.snakeBody2;
+          drawGlowCircle(ctx, s.x, s.y, this.radius, color, COLORS.glow);
+        }
+
+        // Head (bright)
+        drawGlowCircle(ctx, this.head.x, this.head.y, this.headRadius, COLORS.snakeHead, COLORS.glowStrong);
+
+        // Eyes
+        const eyeOffset = 5.2;
+        const ex = Math.cos(this.angle);
+        const ey = Math.sin(this.angle);
+        drawEye(ctx, this.head.x + (-ey) * eyeOffset, this.head.y + (ex) * eyeOffset);
+        drawEye(ctx, this.head.x + (ey) * eyeOffset, this.head.y + (-ex) * eyeOffset);
+      }
+    }
+
+    class FoodManager {
+      constructor() {
+        this.items = [];
+        this.radius = 5;
+        this.maxItems = 26;
+      }
+      spawn(num = 1, avoidX = null, avoidY = null) {
+        for (let i = 0; i < num; i++) {
+          let x, y, tries = 0;
+          do {
+            x = Math.random() * WORLD.width;
+            y = Math.random() * WORLD.height;
+            tries++;
+          } while (avoidX !== null && dist(x, y, avoidX, avoidY) < 60 && tries < 50);
+          this.items.push({ x, y });
+        }
+        if (this.items.length > this.maxItems) this.items.splice(0, this.items.length - this.maxItems);
+      }
+      update() {}
+      render(ctx) {
+        for (const f of this.items) {
+          drawFood(ctx, f.x, f.y, this.radius);
+        }
+      }
+      tryEat(snake) {
+        let eaten = 0;
+        for (let i = this.items.length - 1; i >= 0; i--) {
+          const f = this.items[i];
+          if (dist(snake.head.x, snake.head.y, f.x, f.y) < (snake.headRadius + this.radius) * 0.9) {
+            this.items.splice(i, 1);
+            eaten++;
+          }
+        }
+        return eaten;
+      }
+    }
+
+    // =========================
+    // Rendering helpers
+    // =========================
+    const COLORS = {
+      gridLight: "#114a29",
+      gridDark:  "#0d3a21",
+      snakeHead: "#6dd68c",
+      snakeBody: "#1fa34a",
+      snakeBody2:"#136b35",
+      glow: "rgba(109,214,140,0.35)",
+      glowStrong: "rgba(109,214,140,0.55)",
+      fruit: "#ff4d4d",
+      fruitHighlight: "rgba(255,255,255,0.35)"
+    };
+
+    function drawGrid(ctx) {
+      const step = 40; // px
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < WORLD.width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0); ctx.lineTo(x, WORLD.height); ctx.stroke();
+      }
+      for (let y = 0; y < WORLD.height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y); ctx.lineTo(WORLD.width, y); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawGlowCircle(ctx, x, y, r, fill, glow) {
+      // Glow
+      const g = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.2);
+      g.addColorStop(0, glow);
+      g.addColorStop(1, "transparent");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, r * 2, 0, Math.PI * 2); ctx.fill();
+
+      // Body
+      ctx.fillStyle = fill;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawEye(ctx, x, y) {
+      ctx.fillStyle = "#eaf7ec";
+      ctx.beginPath(); ctx.arc(x, y, 2.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#0a1b13";
+      ctx.beginPath(); ctx.arc(x, y, 1.3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawFood(ctx, x, y, r) {
+      // Glow
+      const g = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.4);
+      g.addColorStop(0, "rgba(255,77,77,0.35)");
+      g.addColorStop(1, "transparent");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, r * 2, 0, Math.PI * 2); ctx.fill();
+
+      // Fruit body
+      ctx.fillStyle = COLORS.fruit;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+
+      // Small highlight
+      ctx.fillStyle = COLORS.fruitHighlight;
+      ctx.beginPath(); ctx.arc(x + r*0.25, y - r*0.25, r * 0.45, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // =========================
+    // Audio: “num num”
+    // =========================
+    function playNumNum() {
+      try {
+        if ("speechSynthesis" in window) {
+          const utter = new SpeechSynthesisUtterance("num num");
+          utter.rate = 1.0; utter.pitch = 1.1; utter.volume = 0.9;
+          const voices = window.speechSynthesis.getVoices();
+          const preferred = voices.find(v => /en/i.test(v.lang)) || voices[0];
+          if (preferred) utter.voice = preferred;
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utter);
+          return;
+        }
+      } catch {}
+
+      // WebAudio fallback pop
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctxA = new AudioCtx();
+        const o = ctxA.createOscillator();
+        const g = ctxA.createGain();
+        o.type = "sine"; o.frequency.value = 660;
+        g.gain.value = 0.17;
+        o.connect(g); g.connect(ctxA.destination);
+        o.start(); setTimeout(() => { o.stop(); ctxA.close(); }, 150);
+      } catch {}
+    }
+
+    // =========================
+    // Game Controller
+    // =========================
+    class Game {
+      constructor() {
+        this.snake = new Snake(WORLD.width * 0.5, WORLD.height * 0.5);
+        this.food = new FoodManager();
+        this.food.spawn(18, this.snake.head.x, this.snake.head.y);
+
+        this.score = 0;
+        this.running = false;
+
+        this.lastTime = performance.now();
+        this.accum = 0;
+      }
+
+      setSpeedFromSlider(val) {
+        const t = (val - 1) / (10 - 1); // 0..1
+        const min = 0.6, max = 1.8;     // factor on base speed
+        const f = min + t * (max - min);
+        this.snake.setSpeedFactor(f);
+
+        // Turn rate scales slightly with speed for slither-like handling
+        this.snake.setTurnRate(3.8 + t * 2.2);
+      }
+
+      start() {
+        if (this.running) return;
+        this.running = true;
+        this.lastTime = performance.now();
+        startPauseBtn.textContent = "Pause";
+        requestAnimationFrame(this.loop.bind(this));
+      }
+
+      pause() {
+        this.running = false;
+        startPauseBtn.textContent = "Start";
+      }
+
+      reset() {
+        this.pause();
+        this.snake = new Snake(WORLD.width * 0.5, WORLD.height * 0.5);
+        this.food = new FoodManager();
+        this.food.spawn(18, this.snake.head.x, this.snake.head.y);
+        this.score = 0;
+        scoreEl.textContent = this.score;
+        drawSplash();
+      }
+
+      loop(now) {
+        if (!this.running) return;
+        const dt = Math.min(0.033, (now - this.lastTime) / 1000); // clamp dt
+        this.lastTime = now;
+
+        // Update
+        this.snake.update(dt);
+        this.food.update();
+
+        // Eat check
+        const eaten = this.food.tryEat(this.snake);
+        if (eaten > 0) {
+          this.snake.grow(eaten * 10); // grow by segments
+          this.food.spawn(eaten * 2, this.snake.head.x, this.snake.head.y);
+          this.score += eaten;
+          scoreEl.textContent = this.score;
+          playNumNum();
+        }
+
+        // Collision with self
+        if (this.snake.checkSelfCollision()) {
+          this.gameOver();
+          return;
+        }
+
+        // Render
+        ctx.clearRect(0, 0, WORLD.width, WORLD.height);
+        this.food.render(ctx);
+        this.snake.render(ctx);
+
+        requestAnimationFrame(this.loop.bind(this));
+      }
+
+      gameOver() {
+        this.pause();
+        // Best score
+        if (this.score > best) {
+          best = this.score;
+          localStorage.setItem("snake_best_modern", String(best));
+          bestEl.textContent = best;
+        }
+
+        // Overlay message
+        ctx.fillStyle = "rgba(12,31,20,0.82)";
+        ctx.fillRect(0, 0, WORLD.width, WORLD.height);
+        ctx.fillStyle = "#eaf7ec";
+        ctx.textAlign = "center";
+        ctx.font = "800 34px Orbitron, sans-serif";
+        ctx.fillText("Game Over", WORLD.width / 2, WORLD.height / 2 - 16);
+        ctx.font = "700 18px Inter, sans-serif";
+        ctx.fillText(`Score: ${this.score} • Best: ${best}`, WORLD.width / 2, WORLD.height / 2 + 14);
+        ctx.fillText("Press Reset or Start to play again.", WORLD.width / 2, WORLD.height / 2 + 40);
+      }
+    }
+
+    // =========================
+    // Input: mouse/touch steer like slither.io
+    // =========================
+    const GAME = new Game();
+
+    // Mouse aim: steer toward pointer position
+    let mouseX = WORLD.width / 2, mouseY = WORLD.height / 2;
+    let mouseActive = false;
+    canvas.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      mouseActive = true;
+    });
+    canvas.addEventListener('mouseenter', () => mouseActive = true);
+    canvas.addEventListener('mouseleave', () => mouseActive = false);
+
+    // Touch steer pad: drag to aim
+    let dragging = false;
+    let padCenter = { x: 0, y: 0 };
+    function updatePadCenter() {
+      const rect = steerPad.getBoundingClientRect();
+      padCenter.x = rect.left + rect.width / 2;
+      padCenter.y = rect.top + rect.height / 2;
+    }
+    window.addEventListener('resize', updatePadCenter);
+    updatePadCenter();
+
+    function padAngleFromEvent(e) {
+      const pt = e.touches ? e.touches[0] : e;
+      const dx = pt.clientX - padCenter.x;
+      const dy = pt.clientY - padCenter.y;
+      if (Math.hypot(dx, dy) < 8) return null;
+      return Math.atan2(dy, dx);
+    }
+
+    const padPointerStart = (e) => { dragging = true; e.preventDefault(); };
+    const padPointerMove  = (e) => {
+      if (!dragging) return;
+      const a = padAngleFromEvent(e);
+      if (a != null) GAME.snake.targetAngle = a;
+      e.preventDefault();
+    };
+    const padPointerEnd   = (e) => { dragging = false; e.preventDefault(); };
+
+    steerPad.addEventListener('pointerdown', padPointerStart);
+    steerPad.addEventListener('pointermove', padPointerMove);
+    steerPad.addEventListener('pointerup', padPointerEnd);
+    steerPad.addEventListener('pointerleave', padPointerEnd);
+    steerPad.addEventListener('touchstart', padPointerStart, { passive: false });
+    steerPad.addEventListener('touchmove', padPointerMove, { passive: false });
+    steerPad.addEventListener('touchend', padPointerEnd, { passive: false });
+
+    // Keyboard: A/D rotate; Space pause; R reset
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (key === 'a' || key === 'arrowleft') {
+        GAME.snake.rotate(-4.5, 1/60); // small rotation step
+        e.preventDefault();
+      } else if (key === 'd' || key === 'arrowright') {
+        GAME.snake.rotate(4.5, 1/60);
+        e.preventDefault();
+      } else if (key === ' ') {
+        GAME.running ? GAME.pause() : GAME.start();
+        e.preventDefault();
+      } else if (key === 'r') {
+        GAME.reset();
+        e.preventDefault();
+      }
+    });
+
+    // Apply mouse aim each frame via RAF (smoothing is inside aimAt)
+    function aimLoop() {
+      if (GAME.running) {
+        if (mouseActive) GAME.snake.aimAt(mouseX, mouseY, 1/60);
+        else {
+          // When mouse not active, still smooth toward targetAngle
+          GAME.snake.angle = lerpAngle(GAME.snake.angle, GAME.snake.targetAngle, GAME.snake.turnRate * (1/60));
+        }
+      }
+      requestAnimationFrame(aimLoop);
+    }
+    aimLoop();
+
+    // =========================
+    // HUD controls
+    // =========================
+    function applySpeedChange() {
+      const v = parseInt(speedInput.value, 10);
+      speedValEl.textContent = v;
+      GAME.setSpeedFromSlider(v);
+    }
+    speedInput.addEventListener('input', applySpeedChange);
+
+    startPauseBtn.addEventListener('click', () => {
+      GAME.running ? GAME.pause() : GAME.start();
+    });
+    resetBtn.addEventListener('click', () => GAME.reset());
+
+    // =========================
+    // Splash screen
+    // =========================
+    function drawSplash() {
+      ctx.clearRect(0, 0, WORLD.width, WORLD.height);
+      drawGrid(ctx);
+      // Title centered
+      ctx.fillStyle = "#eaf7ec";
+      ctx.textAlign = "center";
+      ctx.font = "800 42px Orbitron, sans-serif";
+      ctx.fillText("Snake — Jungle Neon", WORLD.width / 2, WORLD.height / 2 - 24);
+      ctx.font = "700 18px Inter, sans-serif";
+      ctx.fillText("Move mouse/touch to steer • Press Start", WORLD.width / 2, WORLD.height / 2 + 8);
+      ctx.fillText("Eat fruit to grow • ‘num num’ plays on each bite", WORLD.width / 2, WORLD.height / 2 + 32);
+    }
+
+    // =========================
+    // Boot
+    // =========================
+    resizeCanvas();
+    applySpeedChange();
+    drawSplash();
+
+    // Auto-unlock audio (user gesture required in some browsers) after first Start click.
+  </script>
+</body>
+</html>

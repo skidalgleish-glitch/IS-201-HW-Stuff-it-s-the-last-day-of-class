@@ -1,0 +1,548 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="darkweb">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Darknet Simulation: Family Breach</title>
+
+  <!-- Futuristic/terminal fonts -->
+  https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap
+
+  <style>
+    /* =========================================
+       THEME: Dark Web Simulation (safe, no real data)
+    ========================================== */
+    :root {
+      --bg: #0a0a0d;
+      --bg-2: #0f0f14;
+      --red: #e50914;
+      --red-2: #b1060f;
+      --red-3: #ff3143;
+      --white: #e8e8ee;
+      --gray: #a9a9b2;
+      --green: #2df77d;
+      --amber: #ffc857;
+      --shadow: rgba(0,0,0,0.65);
+      --card: #121218;
+      --border: #1e1e26;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--white);
+      font-family: "Share Tech Mono","Orbitron",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;
+      background:
+        radial-gradient(1200px 800px at 80% -15%, rgba(229,9,20,0.08), transparent 40%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+
+    /* CRT scanline + subtle noise */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.015) 0px,
+        rgba(255,255,255,0.015) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"/>');
+      opacity: 0.04; /* placeholder for noise */
+      pointer-events: none;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3.75rem 1.25rem 3rem;
+    }
+
+    /* Header (sticky) */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: saturate(160%) blur(6px);
+      background: linear-gradient(180deg, rgba(229,9,20,0.12), rgba(10,10,13,0.75));
+      border-bottom: 1px solid #1b1b22;
+    }
+    .head-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .title {
+      font-family: "Orbitron","Share Tech Mono",monospace;
+      font-weight: 900;
+      font-size: clamp(1.5rem, 4.8vw, 2.6rem);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--white);
+      text-shadow: 0 0 8px rgba(229,9,20,0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .title .glyph {
+      color: var(--red);
+      filter: drop-shadow(0 0 10px rgba(229,9,20,0.65));
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #17171f, #111118);
+      color: var(--white);
+      padding: 0.45rem 0.7rem;
+      border-radius: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 14px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.04);
+      transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--red);
+      box-shadow: 0 8px 22px var(--shadow);
+    }
+    .btn .dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 10px rgba(229,9,20,0.75);
+      margin-right: 8px;
+    }
+
+    /* Panels / Cards */
+    .panel {
+      margin-top: 1.35rem;
+      background: linear-gradient(180deg, rgba(20,20,26,0.65), rgba(15,15,20,0.9));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.25rem;
+      box-shadow: 0 12px 24px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.04);
+      backdrop-filter: saturate(130%) blur(2px);
+      transform: translateZ(0);
+      transition: transform 250ms ease, box-shadow 250ms ease;
+    }
+    .panel:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 34px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.07);
+    }
+
+    .section-title {
+      font-weight: 800;
+      color: var(--white);
+      margin: 0 0 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .accent { color: var(--red); }
+
+    .separator {
+      height: 2px;
+      width: 96px;
+      background: linear-gradient(90deg, var(--red-2), var(--red-3));
+      margin: 0.6rem 0 1rem;
+      border-radius: 2px;
+      box-shadow: 0 0 12px rgba(229,9,20,0.5);
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem;
+    }
+    .col-12 { grid-column: span 12; }
+    .col-8  { grid-column: span 8; }
+    .col-6  { grid-column: span 6; }
+    .col-4  { grid-column: span 4; }
+    @media (max-width: 900px){
+      .col-8, .col-6, .col-4 { grid-column: span 12; }
+    }
+
+    /* Streams / lists */
+    ul.data-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    ul.data-list li {
+      position: relative;
+      padding: 0.85rem 0.9rem 0.85rem 2.75rem;
+      background: rgba(18,18,24,0.7);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    ul.data-list li::before {
+      content: "▉";
+      color: var(--red);
+      font-weight: 900;
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      text-shadow: 0 0 6px rgba(229,9,20,0.65);
+    }
+    ul.data-list li .label { color: var(--gray); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.4rem 0.65rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(25,25,33,0.9), rgba(15,15,22,0.95));
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 16px var(--shadow);
+      margin: 0.35rem 0 0.8rem;
+    }
+    .badge .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 10px rgba(229,9,20,0.75);
+    }
+    .badge .label {
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--white);
+    }
+
+    /* Terminal / ticker */
+    .terminal {
+      background: #0f0f14;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      font-family: "Share Tech Mono", monospace;
+      color: var(--white);
+      min-height: 180px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+    .term-line {
+      white-space: pre-wrap;
+      animation: type 1200ms steps(30, end);
+    }
+    @keyframes type {
+      from { clip-path: inset(0 100% 0 0); }
+      to   { clip-path: inset(0 0 0 0); }
+    }
+
+    /* Glitch effect for headings */
+    .glitch {
+      position: relative;
+      display: inline-block;
+    }
+    .glitch::before, .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--red);
+      text-shadow: -1px 0 var(--red), 1px 0 var(--red-2);
+      overflow: hidden;
+      clip-path: inset(0 0 0 0);
+      animation: glitch 1.8s infinite ease-in-out alternate;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .glitch::after {
+      color: var(--red-3);
+      text-shadow: -1px 0 var(--red-3), 1px 0 var(--red-2);
+      animation-duration: 2.1s;
+    }
+    @keyframes glitch {
+      0%   { transform: translate(0,0); clip-path: inset(0 0 0 0); }
+      30%  { transform: translate(-1px,0.5px); clip-path: inset(10% 0 0 0); }
+      60%  { transform: translate(1px,-0.5px); clip-path: inset(0 0 15% 0); }
+      100% { transform: translate(0.5px,0.5px); clip-path: inset(0 0 0 0); }
+    }
+
+    /* Simulation Overlay (Just Kidding) */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,13,0.92);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .overlay .modal {
+      width: min(600px, 92vw);
+      background: #121219;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 18px 44px var(--shadow);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .overlay h3 {
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.5rem;
+      margin: 0 0 0.35rem;
+      color: var(--red);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .overlay p {
+      color: var(--white);
+      opacity: 0.9;
+    }
+    .overlay .close-btn {
+      margin-top: 0.8rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #17171f, #111118);
+      color: var(--white);
+      cursor: pointer;
+    }
+
+    footer {
+      margin-top: 2rem;
+      color: var(--gray);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    a {
+      color: var(--white);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(255,255,255,0.35);
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    a:hover {
+      color: var(--red);
+      border-color: var(--red);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <div class="head-inner">
+      <h1 class="title">
+        <span class="glyph">◎</span>
+        <span class="glitch" data-text="DARKNET SIM">DARKNET SIM</span>
+      </h1>
+      <div class="controls">
+        <button class="btn" id="toggleOverlay" title="Show 'Just Kidding' overlay">
+          <span class="dot"></span> Simulation Notice
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap"
+       id="profile"
+       data-mom="PHOENIX"         <!-- Use nicknames/codenames only -->
+       data-dad="ORION"
+       data-older-1="RAVEN"
+       data-older-2="MCKAY"       <!-- Use a nickname variant if you prefer -->
+       data-sis-1="NOVA"
+       data-sis-2="LYRA"
+       data-younger="ATLAS"
+       data-city="SECTOR-7"
+       data-dogs="TWO BIG DOGS">
+
+    <!-- Threat Banner -->
+    <section class="panel">
+      <h2 class="section-title"><span class="accent">Status</span> // Breach Monitor</h2>
+      <div class="separator"></div>
+      <div class="badge">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="label">Simulation Mode: ACTIVE</span>
+      </div>
+      <div class="terminal" id="terminal">
+        <div class="term-line">[INIT] Loading anonymized profiles...</div>
+        <div class="term-line" id="termProfiles"></div>
+        <div class="term-line">[WARN] Suspicious traffic detected across multiple nodes.</div>
+        <div class="term-line">[INFO] Card enumeration attempts flagged (SYN flood patterns).</div>
+        <div class="term-line">[ALERT] Phishing domain spoofing observed — blocked in sim.</div>
+        <div class="term-line">[MITIGATIONS] MFA, card freeze placeholders, password rotations.</div>
+        <div class="term-line">[END] No real data is used. This is a demonstration only.</div>
+      </div>
+    </section>
+
+    <!-- Profiles / Codenames -->
+    <section class="panel">
+      <h2 class="section-title">Family <span class="accent">Codenames</span></h2>
+      <div class="separator"></div>
+      <div class="grid">
+        <div class="col-6">
+          <ul class="data-list" id="codenameListLeft">
+            <!-- Filled by JS -->
+          </ul>
+        </div>
+        <div class="col-6">
+          <ul class="data-list" id="codenameListRight">
+            <!-- Filled by JS -->
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Threat Feed (fictional) -->
+    <section class="panel">
+      <h2 class="section-title">Threat <span class="accent">Feed</span></h2>
+      <div class="separator"></div>
+      <ul class="data-list">
+        <li><strong>Credential Stuffing:</strong> Simulated attempts using leaked combos (blocked in sim). <span class="label">Vector: auth</span></li>
+        <li><strong>Card Enumeration:</strong> Rapid BIN testing sequences detected (denied). <span class="label">Vector: payments</span></li>
+        <li><strong>Phishing Domain:</strong> Typosquatted URL flagged and quarantined. <span class="label">Vector: web</span></li>
+        <li><strong>Recon Traffic:</strong> Passive OSINT scraping (randomized decoys only). <span class="label">Vector: intel</span></li>
+        <li><strong>Fake Delivery Scam:</strong> SMS bait message blocked by the simulator. <span class="label">Vector: mobile</span></li>
+      </ul>
+    </section>
+
+    <!-- Countermeasures -->
+    <section class="panel">
+      <h2 class="section-title">Counter <span class="accent">Measures</span></h2>
+      <div class="separator"></div>
+      <div class="grid">
+        <div class="col-4">
+          <ul class="data-list">
+            <li><strong>MFA Everywhere:</strong> Enable for email, banking, socials.</li>
+            <li><strong>Unique Passwords:</strong> Use a manager; rotate high‑risk accounts.</li>
+            <li><strong>Card Freeze (Sim):</strong> Practice the workflow to freeze/unfreeze.</li>
+          </ul>
+        </div>
+        <div class="col-4">
+          <ul class="data-list">
+            <li><strong>Alerts On:</strong> Transaction, login, and device alerts enabled.</li>
+            <li><strong>Phishing Drills:</strong> Learn to spot look‑alike domains.</li>
+            <li><strong>Device Hygiene:</strong> OS updates, AV scans, app permissions review.</li>
+          </ul>
+        </div>
+        <div class="col-4">
+          <ul class="data-list">
+            <li><strong>Backup & Recovery:</strong> Offline backups; test restores quarterly.</li>
+            <li><strong>Privacy Settings:</strong> Lock down profiles; minimize public data.</li>
+            <li><strong>Fraud Contacts:</strong> Know your bank/issuer support paths.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- “Just Kidding” Notice -->
+    <section class="panel">
+      <h2 class="section-title">Simulation <span class="accent">Notice</span></h2>
+      <div class="separator"></div>
+      <p style="opacity:0.9;">
+        This page is a <strong>fictional, safe simulation</strong>. It does not contain real personal information or real card
+        data, and it does <strong>not</strong> suggest any actual harm. It’s designed purely for a dramatic look and
+        <em>cybersecurity awareness</em>—with codenames instead of real names and a fictional location.
+      </p>
+      <p style="opacity:0.9;">
+        Tip: Use nicknames only. If anyone gets spooked, click <strong>Simulation Notice</strong> (top‑right) to reveal a big “Just Kidding” overlay.
+      </p>
+    </section>
+
+    <!-- Resources (optional, educational) -->
+    <section class="panel">
+      <h2 class="section-title">Stay <span class="accent">Safe</span></h2>
+      <div class="separator"></div>
+      <p style="line-height:1.7;">
+        • Identity Theft Overview — https://www.consumer.ftc.gov/articles/how-recognize-avoid-and-report-identity-theftFTC</a><br/>
+        • Placing a Fraud Alert — <a href="https://www.consumer.ftc.gov/articles/what-fraud-alert-and-how-place-one" target="_blank" rel="Managers & MFA — https://www.cisa.gov/secure-our-world/strengthen-passwordsCISA</a>
+      </p>
+    </section>
+
+    <footer>
+      Dark‑web aesthetic, zero real data. For laughs + learning only. 🛡️
+    </footer>
+  </div>
+
+  <!-- Overlay -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h3>Simulation / Just Kidding 😅</h3>
+      <p>
+        This is a <strong>safe, fictional demo</strong> with codenames and no real personal or financial information.
+        If you were worried—please don’t be. Nothing here is real or live.
+      </p>
+      <button class="close-btn" id="closeOverlay">Close</button>
+    </div>
+  </div>
+
+  <!-- Minimal JS (populate codenames + overlay controls) -->
+  <script>
+    const profile = document.getElementById('profile');
+    const codenames = [
+      { label: 'MOM', value: profile.dataset.mom },
+      { label: 'DAD', value: profile.dataset.dad },
+      { label: 'OLDER BRO', value: profile.dataset.older1 },
+      { label: 'OLDER BRO', value: profile.dataset.older2 },
+      { label: 'SISTER', value: profile.dataset.sis1 },
+      { label: 'SISTER', value: profile.dataset.sis2 },
+      { label: 'YOUNGER BRO', value: profile.dataset.younger },
+      { label: 'ZONE', value: profile.dataset.city },
+      { label: 'COMPANIONS', value: profile.dataset.dogs },
+    ];
+
+    // Populate terminal profile line
+    const termProfiles = document.getElementById('termProfiles');
+    termProfiles.textContent = '[PROFILES] ' + codenames.map(c => `${c.label}:${c.value}`).join(' | ');
+
+    // Populate lists
+    const left = document.getElementById('codenameListLeft');
+    const right = document.getElementById('codenameListRight');
+    codenames.slice(0, Math.ceil(codenames.length/2)).forEach(c => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${c.label}:</strong> ${c.value} <span class="label">codename</span>`;
+      left.appendChild(li);
+    });
+    codenames.slice(Math.ceil(codenames.length/2)).forEach(c => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${c.label}:</strong> ${c.value} <span class="label">codename</span>`;
+      right.appendChild(li);
+    });
+
+    // Overlay controls
+    const toggleOverlay = document.getElementById('toggleOverlay');
+    const overlay = document.getElementById('overlay');
+    const closeOverlay = document.getElementById('closeOverlay');
+    toggleOverlay.addEventListener('click', () => overlay.style.display = 'flex');
+    closeOverlay.addEventListener('click', () => overlay.style.display = 'none');
+  </script>
+</body>
+</html>
+
+
